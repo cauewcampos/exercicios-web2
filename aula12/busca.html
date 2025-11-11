@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acessa e mostra o resultado</title>
+    <script>
+	window.onload = inicio;
+	var post = 1;
+
+	function inicio() {
+	    busca_e_mostra()
+
+	    var botaoMais = document.getElementById('proximo');
+	    botaoMais.addEventListener('click', proxPost);
+
+	    var botaoMenos = document.getElementById('anterior');
+	    botaoMenos.addEventListener('click', antPost);
+	}
+
+	function proxPost() {
+		if(post==100){
+			return;
+		}
+		post++;
+	    busca_e_mostra();
+	}
+
+	function antPost() {
+		if(post==1){
+			return;
+		}
+	    var botaoMenos = document.getElementById('anterior');
+		post--;
+	    busca_e_mostra();
+	}
+
+	function busca_e_mostra() {
+		var numPost = document.getElementById('postId');
+		numPost.innerHTML = "POST NÚMERO: " + post;
+	    const xhttp = new XMLHttpRequest();
+	    xhttp.onload = function () {
+		var resultado = this.responseText;
+		var objeto = JSON.parse(resultado);
+		var saida = document.getElementById('resposta');
+		saida.innerHTML = objeto.title;
+	    }
+	    xhttp.open("GET", "https://jsonplaceholder.typicode.com/posts/" + post);
+	    xhttp.send();
+	}
+    </script>
+</head>
+
+<body>
+    <p id='postId'></p>
+    <p id='resposta'></p>
+    <form action="">
+	<input type="button" value="Anterior" id='anterior'>
+	<input type="button" value="Próximo" id='proximo'>
+    </form>
+</body>
+
+</html>  
