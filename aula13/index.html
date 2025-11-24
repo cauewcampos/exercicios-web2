@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Controle de Estoque</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        h1, h2 {
+            color: #2c3e50;
+        }
+
+        /* Botão de abrir modal */
+        .btn-abrir {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+        .btn-abrir:hover {
+            background-color: #2980b9;
+        }
+
+        /* Tabela Estoque */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .alerta-estoque {
+            background-color: #ffcccc;
+            color: #a60000;
+            font-weight: bold;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: relative;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+
+        @keyframes slideDown {
+            from {transform: translateY(-60%);}
+            to {transform: translateY(-50%);}
+        }
+
+        .modal h3 {
+            margin-top: 0;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 15px;
+            top: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        input, button {
+            padding: 7px 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button[type="submit"] {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #2980b9;
+        }
+
+        button.cancelar {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        button.cancelar:hover {
+            background-color: #c0392b;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body onload="carregarProdutos()">
+    <h1>Controle de Estoque</h1>
+
+    <button class="btn-abrir" onclick="abrirNovoProduto()">Novo Produto</button>
+
+    <h2>Estoque Atual</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Quantidade</th>
+                <th>Validade</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tabelaEstoque"></tbody>
+    </table>
+
+    <div id="modalNovoProduto" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="fecharNovoProduto()">&times;</span>
+            <h3>Novo Produto</h3>
+            <form id="formNovoProduto">
+                <label>Nome: <input type="text" id="nome" required></label>
+                <label>Quantidade: <input type="number" id="quantidade_estoque" required></label>
+                <label>Estoque Mínimo: <input type="number" id="estoque_minimo" required></label>
+                <label>Preço: <input type="number" step="0.01" id="ultimo_preco" required></label>
+                <label>Validade: <input type="date" id="data_validade"></label>
+                <label>Descrição: <input type="text" id="descricao"></label>
+                <button type="submit">Salvar Novo Produto</button>
+                <button type="button" class="cancelar" onclick="fecharNovoProduto()">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="modalMovimentacao" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="fecharMovimentacao()">&times;</span>
+            <h3>Registrar Movimentação</h3>
+            <form id="formMovimentacao">
+                <input type="hidden" id="mov_id_produto">
+                <p>Produto: <strong id="mov_nome_produto"></strong></p>
+                <label>Nova Quantidade: <input type="number" id="mov_quantidade" required></label>
+                <label>Novo Preço: <input type="number" step="0.01" id="mov_preco" required></label>
+                <label>Nova Validade: <input type="date" id="mov_validade"></label>
+                <button type="submit">Salvar Alterações</button>
+                <button type="button" class="cancelar" onclick="fecharMovimentacao()">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        async function carregarProdutos() {
+            const response = await fetch('api/produtos.php');
+            if (!response.ok) {
+                window.location.href = 'login.html';
+                return;
+            }
+            const produtos = await response.json();
+            const tabela = document.getElementById('tabelaEstoque');
+            tabela.innerHTML = '';
+            produtos.forEach(p => {
+                const tr = document.createElement('tr');
+                const classeAlerta = p.quantidade_estoque < p.estoque_minimo ? 'alerta-estoque' : '';
+                tr.innerHTML = `
+                    <td>${p.nome}</td>
+                    <td class="${classeAlerta}">${p.quantidade_estoque}</td>
+                    <td>${p.data_validade ? new Date(p.data_validade + 'T00:00:00').toLocaleDateString('pt-BR') : ''}</td>
+                    <td><button onclick='abrirMovimentacao(${JSON.stringify(p)})'>Alterar</button></td>
+                `;
+                tabela.appendChild(tr);
+            });
+        }
+
+
+        function abrirNovoProduto() {
+            document.getElementById('modalNovoProduto').style.display = 'block';
+        }
+        function fecharNovoProduto() {
+            document.getElementById('modalNovoProduto').style.display = 'none';
+        }
+
+
+        function abrirMovimentacao(produto) {
+            document.getElementById('mov_id_produto').value = produto.id;
+            document.getElementById('mov_nome_produto').innerText = produto.nome;
+            document.getElementById('mov_quantidade').value = produto.quantidade_estoque;
+            document.getElementById('mov_preco').value = produto.ultimo_preco;
+            document.getElementById('mov_validade').value = produto.data_validade;
+            document.getElementById('modalMovimentacao').style.display = 'block';
+        }
+        function fecharMovimentacao() {
+            document.getElementById('modalMovimentacao').style.display = 'none';
+        }
+
+        document.getElementById('formNovoProduto').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const dados = {
+                nome: document.getElementById('nome').value,
+                descricao: document.getElementById('descricao').value,
+                data_validade: document.getElementById('data_validade').value,
+                quantidade_estoque: document.getElementById('quantidade_estoque').value,
+                estoque_minimo: document.getElementById('estoque_minimo').value,
+                ultimo_preco: document.getElementById('ultimo_preco').value,
+            };
+            await fetch('api/produtos.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(dados)
+            });
+            this.reset();
+            fecharNovoProduto();
+            carregarProdutos();
+        });
+
+        document.getElementById('formMovimentacao').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const dados = {
+                id_produto: document.getElementById('mov_id_produto').value,
+                quantidade_estoque: document.getElementById('mov_quantidade').value,
+                ultimo_preco: document.getElementById('mov_preco').value,
+                data_validade: document.getElementById('mov_validade').value
+            };
+            await fetch('api/movimentacoes.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(dados)
+            });
+            fecharMovimentacao();
+            carregarProdutos();
+        });
+
+        window.onclick = function(event) {
+            const modNovo = document.getElementById('modalNovoProduto');
+            const modMov = document.getElementById('modalMovimentacao');
+            if (event.target == modNovo) fecharNovoProduto();
+            if (event.target == modMov) fecharMovimentacao();
+        }
+    </script>
+</body>
+</html>
